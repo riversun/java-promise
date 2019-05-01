@@ -18,6 +18,24 @@ Promise.resolve()
 
 <img src="https://user-images.githubusercontent.com/11747460/56907143-a11fa380-6ade-11e9-9d23-195cce2c1543.png">
 
+# Dependency
+
+**Maven**
+
+```xml
+<dependency>
+    <groupId>org.riversun</groupId>
+    <artifactId>java-promise</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+**Gradle**
+
+```
+compile group: 'org.riversun', name: 'java-promise', version: '1.0.0'
+```
+
 # Quick Start
 
 ### Execute sequentially by chained "then"
