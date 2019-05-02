@@ -20,9 +20,17 @@ public abstract class TestPromiseAllTestCase {
 
     public abstract Thennable PromiseAll(Func... funcs);
 
-    public abstract Thennable PromiseResolve(Object... data);
+    public abstract Thennable PromiseResolve(Object data);
 
-    public abstract Thennable PromiseReject(Object... data);
+    public Thennable PromiseResolve() {
+        return PromiseResolve(null);
+    }
+
+    public abstract Thennable PromiseReject(Object data);
+
+    public Thennable PromiseReject() {
+        return PromiseReject(null);
+    }
 
     public abstract void sync(Integer... counter);
 

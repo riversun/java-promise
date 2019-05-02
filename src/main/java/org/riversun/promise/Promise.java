@@ -361,13 +361,21 @@ public class Promise implements Thennable {
      * @param data
      * @return
      */
-    public static Promise resolve(Object... data) {
+    public static Promise resolve(Object data) {
         final Promise promise = new Promise();
         promise.mStatus = Status.FULFILLED;
-        if (data != null && data.length > 0) {
-            promise.mResult = data[0];
-        }
+        promise.mResult = data;
         return promise;
+    }
+
+    /**
+     * Returns a Promise object that is resolved with null value
+     * 
+     * @param data
+     * @return
+     */
+    public static Promise resolve() {
+        return resolve(null);
     }
 
     /**
@@ -376,13 +384,21 @@ public class Promise implements Thennable {
      * @param reason
      * @return
      */
-    public static Promise reject(Object... reason) {
+    public static Promise reject(Object reason) {
         final Promise promise = new Promise();
         promise.mStatus = Status.REJECTED;
-        if (reason != null && reason.length > 0) {
-            promise.mResult = reason[0];
-        }
+        promise.mResult = reason;
         return promise;
+    }
+
+    /**
+     * Returns a Promise object that is rejected with null reason.
+     * 
+     * @param reason
+     * @return
+     */
+    public static Promise reject() {
+        return reject(null);
     }
 
     private static final class Holder {

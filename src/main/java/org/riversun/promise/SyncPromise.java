@@ -285,13 +285,21 @@ public class SyncPromise implements Thennable {
      * @param data
      * @return
      */
-    public static SyncPromise resolve(Object... data) {
+    public static SyncPromise resolve(Object data) {
         final SyncPromise promise = new SyncPromise();
         promise.mStatus = Status.FULFILLED;
-        if (data != null && data.length > 0) {
-            promise.mResult = data[0];
-        }
+        promise.mResult = data;
         return promise;
+    }
+
+    /**
+     * Returns a Promise object that is resolved with null value
+     * 
+     * @param data
+     * @return
+     */
+    public static SyncPromise resolve() {
+        return resolve(null);
     }
 
     /**
@@ -300,13 +308,21 @@ public class SyncPromise implements Thennable {
      * @param reason
      * @return
      */
-    public static SyncPromise reject(Object... reason) {
+    public static SyncPromise reject(Object reason) {
         final SyncPromise promise = new SyncPromise();
         promise.mStatus = Status.REJECTED;
-        if (reason != null && reason.length > 0) {
-            promise.mResult = reason[0];
-        }
+        promise.mResult = reason;
         return promise;
+    }
+
+    /**
+     * Returns a Promise object that is rejected with null reason.
+     * 
+     * @param reason
+     * @return
+     */
+    public static SyncPromise reject() {
+        return reject(null);
     }
 
     /**

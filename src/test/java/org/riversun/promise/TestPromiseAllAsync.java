@@ -41,12 +41,12 @@ public class TestPromiseAllAsync extends TestPromiseAllTestCase {
     }
 
     @Override
-    public Thennable PromiseResolve(Object... data) {
+    public Thennable PromiseResolve(Object data) {
         return Promise.resolve(data);
     }
 
     @Override
-    public Thennable PromiseReject(Object... data) {
+    public Thennable PromiseReject(Object data) {
         return Promise.reject(data);
     }
 

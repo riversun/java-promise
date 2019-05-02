@@ -8,13 +8,13 @@ package org.riversun.promise;
 public class TestPromiseSync extends TestPromiseTestCase {
 
     @Override
-    public Thennable PromiseResolve(Object... value) {
+    public Thennable PromiseResolve(Object value) {
         return SyncPromise.resolve(value);
 
     }
 
     @Override
-    public Thennable PromiseReject(Object... value) {
+    public Thennable PromiseReject(Object value) {
         return SyncPromise.reject(value);
     }
 

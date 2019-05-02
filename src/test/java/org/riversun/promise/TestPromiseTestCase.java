@@ -11,9 +11,17 @@ import org.junit.Test;
  */
 public abstract class TestPromiseTestCase {
 
-    public abstract Thennable PromiseResolve(Object... value);
+    public abstract Thennable PromiseResolve(Object value);
 
-    public abstract Thennable PromiseReject(Object... value);
+    public Thennable PromiseResolve() {
+        return PromiseResolve(null);
+    }
+
+    public abstract Thennable PromiseReject(Object value);
+
+    public Thennable PromiseReject() {
+        return PromiseReject(null);
+    }
 
     public abstract void sync(Integer... counter);
 

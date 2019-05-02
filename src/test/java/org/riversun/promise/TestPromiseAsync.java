@@ -10,12 +10,12 @@ import java.util.concurrent.CountDownLatch;
 public class TestPromiseAsync extends TestPromiseTestCase {
 
     @Override
-    public Thennable PromiseResolve(Object... value) {
+    public Thennable PromiseResolve(Object value) {
         return Promise.resolve(value);
     }
 
     @Override
-    public Thennable PromiseReject(Object... value) {
+    public Thennable PromiseReject(Object value) {
         return Promise.reject(value);
     }
 

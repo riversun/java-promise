@@ -27,12 +27,12 @@ public class TestPromiseAllSync extends TestPromiseAllTestCase {
     }
 
     @Override
-    public Thennable PromiseResolve(Object... data) {
+    public Thennable PromiseResolve(Object data) {
         return SyncPromise.resolve(data);
     }
 
     @Override
-    public Thennable PromiseReject(Object... data) {
+    public Thennable PromiseReject(Object data) {
         return SyncPromise.reject(data);
     }
 
