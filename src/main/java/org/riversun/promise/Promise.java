@@ -366,17 +366,7 @@ public class Promise implements Thennable {
         return promise;
     }
 
-    /**
-     * Returns a Promise object that is resolved with a given value
-     * 
-     * @param data
-     * @return
-     */
-    public static Promise resolve(String name) {
-        final Promise promise = new Promise(name, null);
-        promise.mStatus = Status.FULFILLED;
-        return promise;
-    }
+ 
 
     /**
      * Returns a Promise object that is rejected with a given reason.

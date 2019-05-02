@@ -40,4 +40,14 @@ public class TestPromiseAllAsync extends TestPromiseAllTestCase {
         return Promise.all(funcs);
     }
 
+    @Override
+    public Thennable PromiseResolve(Object... data) {
+        return Promise.resolve(data);
+    }
+
+    @Override
+    public Thennable PromiseReject(Object... data) {
+        return Promise.reject(data);
+    }
+
 }

@@ -15,11 +15,14 @@ import org.junit.Test;
  * Tom Misawa (riversun.org@gmail.com)
  */
 public abstract class TestPromiseAllTestCase {
-//    private CountDownLatch mLatch;
 
     public abstract Thennable PromiseAll(Thennable... promises);
 
     public abstract Thennable PromiseAll(Func... funcs);
+
+    public abstract Thennable PromiseResolve(Object... data);
+
+    public abstract Thennable PromiseReject(Object... data);
 
     public abstract void sync(Integer... counter);
 
@@ -292,6 +295,42 @@ public abstract class TestPromiseAllTestCase {
         await();
         assertEquals(true, holder.data instanceof Exception);
         assertEquals("My Exception", ((Exception) holder.data).getMessage());
+    }
+
+    /**
+     * Test Promise.resolve
+     */
+    @Test
+    public void test_promiseResolve() {
+        sync();
+        final ObjectHolder holder = new ObjectHolder();
+        PromiseResolve().then(
+                (action, data) -> {
+                    holder.data = data;
+                    action.resolve();
+                    consume();
+                })
+                .start();
+        await();
+        assertEquals(null, holder.data);
+    }
+
+    /**
+     * Test Promise.resolve #2 check resolve(String)
+     */
+    @Test
+    public void test_promiseResolve_check_arg_string() {
+        sync();
+        final ObjectHolder holder = new ObjectHolder();
+        PromiseResolve("str").then(
+                (action, data) -> {
+                    holder.data = data;
+                    action.resolve();
+                    consume();
+                })
+                .start();
+        await();
+        assertEquals("str", holder.data);
     }
 
 }
