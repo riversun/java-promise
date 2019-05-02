@@ -217,15 +217,25 @@ public class Promise implements Thennable {
 
             Promise.this.mFunc.run(new Action() {
                 @Override
-                public void resolve(Object... result) {
+                public void resolve(Object result) {
                     mStatus = Status.FULFILLED;
                     onFinish(result);
                 }
 
                 @Override
-                public void reject(Object... result) {
+                public void reject(Object result) {
                     mStatus = Status.REJECTED;
                     onFinish(result);
+                }
+
+                @Override
+                public void resolve() {
+                    resolve(null);
+                }
+
+                @Override
+                public void reject() {
+                    reject(null);
                 }
             }, previousPromiseResult);
 
@@ -365,8 +375,6 @@ public class Promise implements Thennable {
         }
         return promise;
     }
-
- 
 
     /**
      * Returns a Promise object that is rejected with a given reason.

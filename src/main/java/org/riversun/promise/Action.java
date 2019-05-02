@@ -46,13 +46,27 @@ public interface Action {
      * 
      * @param result
      */
-    public void resolve(Object... result);
+    public void resolve(Object result);
 
     /**
-     * To make the Promise's status rejected and move on to the next processing(specified by then) with the result(rejection reason).
+     * To make the Promise's status fulfilled and move on to the next processing(specified by then) with null result
      * 
      * @param result
      */
-    public void reject(Object... result);
+    public void resolve();
+
+    /**
+     * To make the Promise's status rejected and move on to the next processing(specified by then) with reason
+     * 
+     * @param result
+     */
+    public void reject(Object reason);
+
+    /**
+     * To make the Promise's status rejected and move on to the next processing(specified by then) with null reason
+     * 
+     * @param result
+     */
+    public void reject();
 
 }

@@ -220,10 +220,8 @@ public class SyncPromise implements Thennable {
         try {
             func.run(new Action() {
                 @Override
-                public void resolve(Object... result) {
-                    if (result != null && result.length > 0) {
-                        mNextPromise.mResult = result[0];
-                    }
+                public void resolve(Object result) {
+                    mNextPromise.mResult = result;
                     mNextPromise.mStatus = Status.FULFILLED;
 
                     // Releases a permit, returning it to the semaphore.
@@ -231,14 +229,22 @@ public class SyncPromise implements Thennable {
                 }
 
                 @Override
-                public void reject(Object... result) {
-                    if (result != null && result.length > 0) {
-                        mNextPromise.mResult = result[0];
-                    }
+                public void reject(Object result) {
+                    mNextPromise.mResult = result;
                     mNextPromise.mStatus = Status.REJECTED;
 
                     // Releases a permit, returning it to the semaphore.
                     semaphore.release();
+                }
+
+                @Override
+                public void resolve() {
+                    resolve(null);
+                }
+
+                @Override
+                public void reject() {
+                    reject(null);
                 }
             }, previousPromiseResult);
         } catch (Exception e) {
