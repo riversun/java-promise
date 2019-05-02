@@ -341,4 +341,78 @@ public abstract class TestPromiseAllTestCase {
         assertEquals("str", holder.data);
     }
 
+    /**
+     * Test Promise.resolve #3 check resolve(String[])
+     */
+    @Test
+    public void test_promiseResolve_check_arg_array_of_string() {
+        sync();
+        final ObjectHolder holder = new ObjectHolder();
+        PromiseResolve(new String[] { "str1", "str2" }).then(
+                (action, data) -> {
+                    holder.data = data;
+                    action.resolve();
+                    consume();
+                })
+                .start();
+        await();
+
+        assertEquals(Arrays.asList(new String[] { "str1", "str2" }), Arrays.asList((String[]) holder.data));
+    }
+
+    /**
+     * Test Promise.reject
+     */
+    @Test
+    public void test_promiseReject() {
+        sync();
+        final ObjectHolder holder = new ObjectHolder();
+        PromiseReject().then(null,
+                (action, data) -> {
+                    holder.data = data;
+                    action.reject();
+                    consume();
+                })
+                .start();
+        await();
+        assertEquals(null, holder.data);
+    }
+
+    /**
+     * Test Promise.reject #2 check reject(String)
+     */
+    @Test
+    public void test_promiseReject_check_arg_string() {
+        sync();
+        final ObjectHolder holder = new ObjectHolder();
+        PromiseReject("str").then(null,
+                (action, data) -> {
+                    holder.data = data;
+                    action.reject();
+                    consume();
+                })
+                .start();
+        await();
+        assertEquals("str", holder.data);
+    }
+
+    /**
+     * Test Promise.reject #3 check reject(String[])
+     */
+    @Test
+    public void test_promiseReject_check_arg_array_of_string() {
+        sync();
+        final ObjectHolder holder = new ObjectHolder();
+        PromiseReject(new String[] { "str1", "str2" }).then(
+                null,
+                (action, data) -> {
+                    holder.data = data;
+                    action.reject();
+                    consume();
+                })
+                .start();
+        await();
+
+        assertEquals(Arrays.asList(new String[] { "str1", "str2" }), Arrays.asList((String[]) holder.data));
+    }
 }

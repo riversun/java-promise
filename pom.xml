@@ -6,7 +6,7 @@
 
 	<groupId>org.riversun</groupId>
 	<artifactId>java-promise</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 	<name>java-promise</name>
 	<description>Simple Promise library for java</description>
