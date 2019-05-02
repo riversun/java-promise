@@ -248,15 +248,9 @@ public class Promise implements Thennable {
 
     }
 
-    private void onFinish(Object... result) {
+    private void onFinish(Object result) {
 
-        final Object crrResult;
-
-        if (result != null && result.length > 0) {
-            crrResult = result[0];
-        } else {
-            crrResult = null;
-        }
+        final Object crrResult = result;
 
         final Promise nextPromise = mParentPromise.mNextPromise;
 
