@@ -6,6 +6,9 @@
 
 It is licensed under [MIT](https://opensource.org/licenses/MIT).
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.riversun/java-promise/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.riversun/java-promise)
+
+
 **Syntax:**  
 You can write in a syntax similar to JavaScript as follows:
 
