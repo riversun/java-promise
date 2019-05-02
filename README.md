@@ -9,8 +9,58 @@ It is licensed under [MIT](https://opensource.org/licenses/MIT).
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.riversun/java-promise/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.riversun/java-promise)
 
 
+# Quick Look
+
+**Writing a Promise in Javascript**
+
+A typical example of using promise in JavaScript is:
+
+```JavaScript
+Promise.resolve('foo')
+    .then(function (data) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                const newData = data + 'bar';
+                resolve(newData);
+            }, 1);
+        });
+    })
+    .then(function (data) {
+        return new Promise(function (resolve, reject) {
+            console.log(data);
+        });
+    });
+console.log("Promise in JavaScript");
+```
+
+**Writing a Promise in java-promise**
+
+Write the same thing using **java-promise**
+
+```Java
+import org.riversun.promise.Promise;
+public class Example {
+
+    public static void main(String[] args) {
+        Promise.resolve("foo")
+                .then(new Promise((action, data) -> {
+                    new Thread(() -> {
+                        String newData = data + "bar";
+                        action.resolve(newData);
+                    }).start();
+                }))
+                .then(new Promise((action, data) -> {
+                    System.out.println(data);
+                    action.resolve();
+                }))
+                .start();
+        System.out.println("Promise in Java");
+    }
+}
+```
+
 **Syntax:**  
-You can write in a syntax similar to JavaScript as follows:
+Yes,you can write in a syntax similar to JavaScript as follows:
 
 ```Java
 Promise.resolve()
