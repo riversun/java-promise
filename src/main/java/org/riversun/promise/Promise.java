@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
 /**
  * 
@@ -78,10 +79,14 @@ import java.util.concurrent.Executors;
  */
 public class Promise implements Thennable {
 
+    private static final Logger LOGGER = Logger.getLogger(Promise.class.getName());
+    private static final String TAG = Promise.class.getSimpleName();
+
     private Status mStatus;
 
     public String mName = "";
     private ExecutorService mExecutor = null;
+    private boolean mIsExecutorAutoShutdown = true;
     private Promise mFounder = null;
     private Promise mParentPromise = null;
 
@@ -98,20 +103,51 @@ public class Promise implements Thennable {
         mStatus = Status.PENDING;
     }
 
-    public Promise(String name, Func func) {
+    private String getName() {
+        return mName;
+    }
+
+    public Promise(String name, Func func, ExecutorService executor) {
         this();
+        if (name == null) {
+            name = this.toString();
+        }
+
         this.mName = name;
         this.mFunc = func;
+        if (executor != null) {
+            this.mExecutor = executor;
+            this.mIsExecutorAutoShutdown = false;
+        }
+
+        LOGGER.fine(TAG + " " + getName() + " construct() func=" + mFunc + ", executor=" + executor);
+
+    }
+
+    public Promise(String name, ExecutorService executor) {
+        this(name, null, executor);
+    }
+
+    public Promise(ExecutorService executor) {
+        this(null, null, executor);
+    }
+
+    public Promise(Func func, ExecutorService executor) {
+        this(null, func, executor);
+    }
+
+    public Promise(String name, Func func) {
+        this(name, func, null);
     }
 
     public Promise(Func func) {
-        this();
-        this.mName = this.toString();
-        this.mFunc = func;
+        this(null, func, null);
     }
 
     public ExecutorService createExecutor() {
-        return Executors.newCachedThreadPool();
+        final ExecutorService executor = Executors.newCachedThreadPool();
+        LOGGER.fine(TAG + " " + getName() + "#createExecutor created executor=" + executor);
+        return executor;
     }
 
     /**
@@ -124,6 +160,9 @@ public class Promise implements Thennable {
      */
     @Override
     public Promise then(Func... funcs) {
+
+        LOGGER.fine(TAG + " " + getName() + "#then(funcs) funcs=" + funcs);
+
         final List<Promise> promiseList = new ArrayList<Promise>();
         if (funcs != null) {
             for (Func func : funcs) {
@@ -136,11 +175,13 @@ public class Promise implements Thennable {
                 promiseList.add(promise);
             }
         }
+
         return then(promiseList.toArray(new Promise[0]));
     }
 
     @Override
     public Promise always(Thennable promise) {
+        LOGGER.fine(TAG + " " + getName() + "#always promise=" + promise);
         return then(promise, promise);
     }
 
@@ -152,7 +193,7 @@ public class Promise implements Thennable {
 
     @Override
     public Promise then(Thennable... promises) {
-
+        LOGGER.fine(TAG + " " + getName() + "#then(promises) promises=" + promises);
         Thennable onFulfilled = null;
         Thennable onRejected = null;
 
@@ -165,6 +206,7 @@ public class Promise implements Thennable {
         // Create executor at first access
         if (mExecutor == null) {
             mExecutor = createExecutor();
+            LOGGER.fine(TAG + " " + getName() + "#then(promises) executor for ths promise is created=" + mExecutor);
         }
 
         // Remember "ancestor" promise at first access
@@ -172,7 +214,9 @@ public class Promise implements Thennable {
             mFounder = Promise.this;
         }
 
-        mNextPromise = createNextPromise("***(next of " + mName + ")", (Promise) onFulfilled, (Promise) onRejected);
+        mNextPromise = createNextPromise("NextPromise-of-" + mName + ")", (Promise) onFulfilled, (Promise) onRejected);
+        LOGGER.fine(TAG + " " +
+                getName() + "#then(promises) createNextPromise from onFulfilled=" + onFulfilled + " and onRejected=" + onRejected + " result next promise =" + mNextPromise);
 
         // Warning:If you don't "ignite" after all "#then"s called, an inconsistency will occur.
         // Do not call ignite before returning all mNextPromise by all of "#then"s
@@ -184,6 +228,7 @@ public class Promise implements Thennable {
 
     @Override
     public Promise start() {
+        LOGGER.fine(TAG + " " + getName() + "#start mFounder=" + mFounder);
         mFounder.ignite();
         return Promise.this;
     }
@@ -193,15 +238,21 @@ public class Promise implements Thennable {
      */
     private void ignite() {
 
+        LOGGER.fine(TAG + " " + getName() + "#ignite mPreviousPromise=" + mPreviousPromise);
+
         if (mPreviousPromise == null) {
+
             // first "then" call
+            LOGGER.fine(TAG + " " + getName() + "#ignite first call! on " + Thread.currentThread());
+
             runOnThread(new Runnable() {
                 @Override
                 public void run() {
                     try {
+                        LOGGER.fine(TAG + " " + getName() + "#ignite first call doNext mNextPromise=" + mNextPromise + " mResult=" + mResult);
                         doNext(mNextPromise, mResult);
                     } catch (Exception e) {
-                        if (mExecutor != null) {
+                        if (mExecutor != null && mIsExecutorAutoShutdown) {
                             mExecutor.shutdown();
                         }
                         e.printStackTrace();
@@ -254,6 +305,8 @@ public class Promise implements Thennable {
 
         final Promise nextPromise = mParentPromise.mNextPromise;
 
+        LOGGER.fine(TAG + " " + getName() + "#onFinish result=" + result + " nextPromise=" + nextPromise);
+
         if (nextPromise != null) {
             doNext(nextPromise, crrResult);
         } else {
@@ -261,12 +314,22 @@ public class Promise implements Thennable {
 
             // Since there is no next promise,it means that the execution is the last here.
             // So shut down the executor
-            mParentPromise.mExecutor.shutdown();
+
+            if (mParentPromise.mIsExecutorAutoShutdown) {
+                LOGGER.fine(TAG + " " + getName() + "#onFinish executor(" + mParentPromise.mExecutor + ")  SHUTDOWN!!");
+                mParentPromise.mExecutor.shutdown();
+            } else {
+                LOGGER.fine(TAG + " " + getName() + "#onFinish executor(" + mParentPromise.mExecutor + ")  It is a phase to SHUTDOWN, but does NOT SHUTDOWN because the original executor is set.");
+            }
         }
     }
 
     private void doNext(Promise nextPromise, Object crrResult) {
-
+        LOGGER.fine(TAG + " " + getName() + "#doNext mStatus=" + mStatus + " crrResult=" + crrResult);
+        if (Log.isLogEnabled() && crrResult != null && crrResult instanceof Exception) {
+            LOGGER.fine(TAG + " " + getName() + "#doNext rejection detected.");
+            ((Exception) crrResult).printStackTrace();
+        }
         switch (mStatus) {
         case FULFILLED:
 
@@ -286,6 +349,7 @@ public class Promise implements Thennable {
             }
 
             try {
+                LOGGER.fine(TAG + " " + getName() + " RUNNING " + nextPromise.mOnFulfilled.getName() + " crrResult=" + crrResult + " on " + Thread.currentThread());
                 nextPromise.mOnFulfilled.invokeFunction(crrResult);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -316,9 +380,11 @@ public class Promise implements Thennable {
 
     private Promise createNextPromise(String promiseName, Promise onFulfilled, Promise onRejected) {
 
-        final Promise nextPromise = new Promise(promiseName, null);
+        final Promise nextPromise = new Promise(promiseName, (Func) null);
 
         nextPromise.mExecutor = Promise.this.mExecutor;
+        nextPromise.mIsExecutorAutoShutdown = Promise.this.mIsExecutorAutoShutdown;
+
         nextPromise.mFounder = Promise.this.mFounder;
         nextPromise.mPreviousPromise = Promise.this;
 
@@ -338,6 +404,7 @@ public class Promise implements Thennable {
         mParentPromise = parentPromise;
         mPreviousPromise = parentPromise.mPreviousPromise;
         mExecutor = parentPromise.mExecutor;
+        mIsExecutorAutoShutdown = parentPromise.mIsExecutorAutoShutdown;
         mFounder = parentPromise.mFounder;
     }
 
@@ -356,16 +423,28 @@ public class Promise implements Thennable {
     }
 
     /**
-     * Returns a Promise object that is resolved with a given value
+     * Returns a Promise object that is fulfilled with a given data and specify executor
+     * 
+     * @param data
+     * @param executor
+     * @return
+     */
+    public static Promise resolve(Object data, ExecutorService executor) {
+        LOGGER.fine(TAG + " " + "Promise.resolve data=" + data + " executor=" + executor);
+        final Promise promise = new Promise("Promise.Resolve.Created", executor);
+        promise.mStatus = Status.FULFILLED;
+        promise.mResult = data;
+        return promise;
+    }
+
+    /**
+     * Returns a Promise object that is fulfilled with a given data
      * 
      * @param data
      * @return
      */
     public static Promise resolve(Object data) {
-        final Promise promise = new Promise();
-        promise.mStatus = Status.FULFILLED;
-        promise.mResult = data;
-        return promise;
+        return resolve(data, null);
     }
 
     /**
@@ -375,7 +454,7 @@ public class Promise implements Thennable {
      * @return
      */
     public static Promise resolve() {
-        return resolve(null);
+        return resolve(null, null);
     }
 
     /**
@@ -430,6 +509,22 @@ public class Promise implements Thennable {
      * 
      */
     public static Promise all(Thennable... promises) {
+        ExecutorService executor = null;
+        return all(executor, promises);
+    }
+
+    public static Promise all(final ExecutorService executor, Thennable... promises) {
+
+        LOGGER.fine(TAG + " " + "Promise.all executor=" + executor + " promises=" + promises);
+
+        final ExecutorService _executor;
+
+        if (executor == null) {
+            _executor = Executors.newCachedThreadPool();
+        } else {
+            _executor = executor;
+        }
+
         if (promises == null || promises.length == 0) {
             // If an empty iterable is passed, then this method returns an
             // already resolved promise.
@@ -439,7 +534,21 @@ public class Promise implements Thennable {
         final List<Object> resultList = new ArrayList<Object>();
         final List<Holder> resultHolderList = new ArrayList<Holder>();
 
-        final Func func = new Func() {
+        // build workers(=children of Promise.all) promise name
+        final StringBuilder sbWorkersPromise = new StringBuilder();
+        sbWorkersPromise.append("WorkersPromise[");
+        for (Thennable _promise : promises) {
+            final Promise srcPromise = (Promise) _promise;
+            sbWorkersPromise.append(srcPromise.getName() + ":");
+        }
+        sbWorkersPromise.append("]");
+        final String nameOfWorkersPromise = sbWorkersPromise.toString();
+
+        final Func funcWorkers = new Func() {
+
+            public String toString() {
+                return sbWorkersPromise.toString() + "'s function";
+            }
 
             @Override
             public void run(Action _action, Object data) throws Exception {
@@ -448,39 +557,61 @@ public class Promise implements Thennable {
 
                 final Holder rejectedHolder = new Holder();
 
-                for (Thennable promise : promises) {
+                for (Thennable _promise : promises) {
+
+                    final Promise srcPromise = (Promise) _promise;
+
+                    LOGGER.fine(TAG + " " + "Promise.all add promise=" + srcPromise.getName());
 
                     final Holder resultHolder = new Holder();
                     resultHolderList.add(resultHolder);
 
-                    Promise.resolve().then(promise).then(
-                            // fulfilled
-                            new Func() {
-                                @Override
-                                public void run(Action action, Object data) throws Exception {
-                                    resultHolder.result = data;
-                                    action.resolve();
-                                    latch.countDown();
-                                }
-                            },
-                            // rejected
-                            new Func() {
-                                @Override
-                                public void run(Action action, Object data) throws Exception {
-                                    rejectedHolder.rejected = true;
-                                    rejectedHolder.result = data;
-                                    resultHolder.result = data;
-                                    action.resolve();
+                    final Promise workerPromise = new Promise(srcPromise.getName() + ".Starter", _executor);
+                    workerPromise.mStatus = Status.FULFILLED;
 
-                                    // Countdown latches to cancel to move forward even if there is something else thread running
-                                    for (int i = 0; i < promises.length; i++) {
-                                        latch.countDown();
-                                    }
-                                }
-                            }).start();
+                    workerPromise.then(srcPromise).then(
+                            // fulfilled
+                            new Promise(
+                                    "Promise.all [FULFILLED promise of " + srcPromise.getName() + "]",
+                                    new Func() {
+                                        @Override
+                                        public void run(Action action, Object data) throws Exception {
+                                            resultHolder.result = data;
+                                            action.resolve();
+                                            LOGGER.fine(TAG + " " + "Promise.all " + srcPromise.getName() + " FULFILLED on " + Thread.currentThread());
+                                            latch.countDown();
+                                        }
+                                    }),
+                            // rejected
+                            new Promise(
+                                    "Promise.all [REJECTED promise of " + srcPromise.getName() + "]",
+                                    new Func() {
+                                        @Override
+                                        public void run(Action action, Object data) throws Exception {
+                                            rejectedHolder.rejected = true;
+                                            rejectedHolder.result = data;
+                                            resultHolder.result = data;
+                                            action.resolve();
+
+                                            LOGGER.fine(TAG + " " + "Promise.all " + srcPromise.getName() + " REJECTED on " + Thread.currentThread());
+
+                                            // Countdown latches to cancel to move forward even if there is something else thread running
+                                            for (int i = 0; i < promises.length; i++) {
+                                                latch.countDown();
+                                            }
+                                        }
+                                    }))
+                            .start();
                 }
 
                 latch.await();
+
+                if (executor == null) {
+                    // automatically shutdown on Promise.all
+                    _executor.shutdown();
+                } else {
+                    // The user needs to shutdown the executor
+                }
 
                 final boolean isRejected = rejectedHolder.rejected;
                 final Object rejectedResultObject = rejectedHolder.result;
@@ -495,17 +626,14 @@ public class Promise implements Thennable {
                     _action.resolve(resultList);
                 }
             }
-        };
+        };// end of func
 
-        return Promise.resolve().then(func);
-    }
+        final Promise workersPromise = new Promise(nameOfWorkersPromise, funcWorkers);
 
-    public static void sleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        final Promise starterOfWorkersPromise = new Promise(nameOfWorkersPromise + ".Starter", _executor);
+        starterOfWorkersPromise.mStatus = Status.FULFILLED;
+
+        return starterOfWorkersPromise.then(workersPromise);
     }
 
     /**
@@ -531,9 +659,15 @@ public class Promise implements Thennable {
      * @return
      * 
      */
+
     public static Promise all(Func... funcs) {
+        return all(null, funcs);
+    }
+
+    public static Promise all(ExecutorService executor, Func... funcs) {
         if (funcs == null || funcs.length == 0) {
-            return Promise.resolve();
+            final Object data = null;
+            return Promise.resolve(data, executor);
         }
 
         final List<Promise> promiseList = new ArrayList<Promise>();
@@ -550,7 +684,15 @@ public class Promise implements Thennable {
                 promiseList.add(promise);
             }
         }
-        return Promise.all(promiseList.toArray(new Promise[0]));
+        return Promise.all(executor, promiseList.toArray(new Promise[0]));
+    }
+
+    public static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 }
