@@ -93,14 +93,14 @@ Promise.resolve()
 <dependency>
     <groupId>org.riversun</groupId>
     <artifactId>java-promise</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
 **Gradle**
 
 ```
-compile group: 'org.riversun', name: 'java-promise', version: '1.0.0'
+compile group: 'org.riversun', name: 'java-promise', version: '1.1.0'
 ```
 
 # Quick Start
