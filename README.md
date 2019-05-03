@@ -386,6 +386,57 @@ No.2 result is func2-result
 No.3 result is func3-result
 ```
 
+### Threading
+
+It is also possible to execute Promise processing on the specified executor.
+<font color=red>Note if you use your own executor, remember to shut it down after use.
+If you use your own executor, it will **NOT** be shutdown automatically</font>　　
+
+At least one worker thread to be used in Promise.all,
+and one thread for overall asynchronous execution, so a total of <font color=red>two or more threads</font> must be needed.
+
+```Java
+public class Example {
+
+    public static void main(String[] args) {
+
+        final ExecutorService myExecutor = Executors.newFixedThreadPool(5);
+
+        Func func1 = (action, data) -> {
+            System.out.println("func1 on " + Thread.currentThread().getName());
+            action.resolve();
+        };
+
+        Func func2 = (action, data) -> {
+            System.out.println("func2 on " + Thread.currentThread().getName());
+            action.resolve();
+        };
+
+        Func func3 = (action, data) -> {
+            System.out.println("func3 on " + Thread.currentThread().getName());
+            action.resolve();
+        };
+
+        Promise.all(myExecutor, func1, func2, func3)
+                .then((action, data) -> {
+                    System.out.println("final process on " + Thread.currentThread().getName());
+                    myExecutor.shutdown();//If you use your own executor, remember to shut it down after use
+                    action.resolve();
+                })
+                .start();
+    }
+}
+```
+
+**Result:**
+
+```
+func1 on pool-1-thread-2
+func2 on pool-1-thread-3
+func3 on pool-1-thread-4
+final process on pool-1-thread-1
+```
+
 # SyncPromise
 
 SyncPromise, as the name implies, is a synchronous promise.  
