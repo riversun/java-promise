@@ -4,8 +4,11 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.Test;
 
@@ -415,4 +418,5 @@ public abstract class TestPromiseAllTestCase {
 
         assertEquals(Arrays.asList(new String[] { "str1", "str2" }), Arrays.asList((String[]) holder.data));
     }
+
 }
