@@ -33,6 +33,13 @@ Promise.resolve('foo')
 console.log("Promise in JavaScript");
 ```
 
+Result:
+
+```
+Promise in JavaScript
+foobar
+```
+
 **Writing a Promise in java-promise**
 
 Write the same thing using **java-promise**
@@ -57,6 +64,13 @@ public class Example {
         System.out.println("Promise in Java");
     }
 }
+```
+
+Result:
+
+```
+Promise in Java
+foobar
 ```
 
 **Syntax:**  
@@ -337,6 +351,11 @@ public class ExampleAll {
             System.out.println("func2 running");
             action.resolve("func2-result");
         };
+        Func func3 = (action, data) -> {
+            Promise.sleep(1500);
+            System.out.println("func3 running");
+            action.resolve("func3-result");
+        };
         Func funcGetResult = (action, data) -> {
             List<Object> resultList = (List<Object>) data;
             for (int i = 0; i < resultList.size(); i++) {
@@ -345,7 +364,7 @@ public class ExampleAll {
             }
             action.resolve();
         };
-        Promise.all(func1, func2)
+        Promise.all(func1, func2, func3)
                 .always(funcGetResult)
                 .start();
     }
